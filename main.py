@@ -73,4 +73,5 @@ if __name__ == '__main__':
     sorted_pagerank = sorted(enumerate(pagerank_list), key=lambda x: x[1], reverse=True)
     print("the top 10 nodes:")
     for node, rank in sorted_pagerank[:10]:
-        print(f"Node {node}: PageRank {rank:.4f}")
+        print(f"Node {node}: PageRank {rank}")
+        #print(f"Node {node}: PageRank {rank:.4f}")  # limit floating digits
