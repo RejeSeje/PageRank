@@ -3,7 +3,7 @@ import networkx as nx
 import matplotlib
 
 def construct_graph():
-    with open('data/three.txt', 'rb') as fh:
+    with open('data/p2p-Gnutella08-mod.txt', 'rb') as fh:
         G = nx.read_adjlist(fh, create_using=nx.DiGraph())
 
     G = nx.relabel_nodes(G, {node: int(node) for node in G.nodes})
@@ -40,18 +40,37 @@ def get_initial_ranking_vector(G):
 
     return ranking_vector
 
+def calculate_pagerank(G, damping_factor=0.85, max_iterations=100):
+    # setup
+    n = max(G.nodes()) + 1
+    rv = get_initial_ranking_vector(G)  # x_0
+    dangling_list = get_dangling_list(G)  # list of indices of dangling nodes (no outgoing edges)
+    G_reversed = get_reverse(G)
+
+    # outer loop
+    for _ in range(max_iterations):
+        x_next = [0] * n  # x_{k+1}
+
+        dangling_sum = sum(rv[node] for node in dangling_list)
+        dangling_contribution = (damping_factor * dangling_sum) / n  # Dx_k
+
+        for i in range(n):
+            x_next[i] = (1 - damping_factor) / n  # Sx_k
+            x_next[i] += dangling_contribution
+
+            for j in G_reversed[i]:  # Ax_k
+                x_next[i] += damping_factor * rv[j] / G.out_degree(j)
+
+        rv = x_next
+
+    return rv
+
+
 if __name__ == '__main__':
     G = construct_graph()
-    size = get_size(G)
-    G_reversed = get_reverse(G)
-    branching_arr = get_branching_arr(G)
-    print(branching_arr)
-    dangling_list = get_dangling_list(G)
-    print(dangling_list)
-    rv = get_initial_ranking_vector(G)
-    print(rv)
+    pagerank_list = calculate_pagerank(G)
 
-    #nx.draw(G, with_labels=True)
-    #plt.savefig("graph.png")
-    #nx.draw(G_reversed, with_labels=True)
-    #plt.savefig("graph_r.png")
+    sorted_pagerank = sorted(enumerate(pagerank_list), key=lambda x: x[1], reverse=True)
+    print("the top 10 nodes:")
+    for node, rank in sorted_pagerank[:10]:
+        print(f"Node {node}: PageRank {rank:.4f}")
